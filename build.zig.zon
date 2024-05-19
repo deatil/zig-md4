@@ -1,7 +1,7 @@
 .{
     .name = "zig-md4",
     .description = "A MD4 hash function.",
-    .version = "0.1.0",
+    .version = "0.1.1",
     .paths = .{
         "build.zig",
         "build.zig.zon",

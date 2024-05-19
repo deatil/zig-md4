@@ -1,6 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 const fmt = std.fmt;
+const mem = std.mem;
 const math = std.math;
 
 /// The MD4 function is now considered cryptographically broken.
@@ -11,9 +12,9 @@ pub const MD4 = struct {
     pub const digest_length = 16;
     pub const Options = struct {};
     
-    const shift1 = [_]size{3, 7, 11, 19};
-    const shift2 = [_]size{3, 5, 9, 13};
-    const shift3 = [_]size{3, 9, 11, 15};
+    const shift1 = [_]isize{3, 7, 11, 19};
+    const shift2 = [_]isize{3, 5, 9, 13};
+    const shift3 = [_]isize{3, 9, 11, 15};
 
     const xIndex2 = [_]usize{0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15};
     const xIndex3 = [_]usize{0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15};
@@ -36,8 +37,6 @@ pub const MD4 = struct {
             .buf = undefined,
             .buf_len = 0,
             .total_len = 0,
-
-            .digest = undefined,
         };
     }
 
@@ -74,29 +73,36 @@ pub const MD4 = struct {
     }
 
     pub fn final(d: *Self, out: *[digest_length]u8) void {
-        const buf_len = 16 - d.buf_len;
-        
-        var tmp: [64]u8 = undefined;
-        tmp[0] = 0x80;
-        if buf_len%64 < 56 {
-            d.update(tmp[0 .. 56-buf_len%64]);
-        } else {
-            d.update(tmp[0 .. 64+56-buf_len%64]);
+        // The buffer here will never be completely full.
+        @memset(d.buf[d.buf_len..], 0);
+
+        // Append padding bits.
+        d.buf[d.buf_len] = 0x80;
+        d.buf_len += 1;
+
+        // > 448 mod 512 so need to add an extra round to wrap around.
+        if (64 - d.buf_len < 8) {
+            d.round(d.buf[0..]);
+            @memset(d.buf[0..], 0);
         }
-        
-        buf_len <<= 3;
-        var i: usize = 0;
+
+        // Append message length.
+        var i: usize = 1;
+        var len = d.total_len >> 5;
+        d.buf[56] = @as(u8, @intCast(d.total_len & 0x1f)) << 3;
         while (i < 8) : (i += 1) {
-            tmp[i] = @as(u8, @intCast((buf_len >> (8 * i)) & 0xff))
+            d.buf[56 + i] = @as(u8, @intCast(len & 0xff));
+            len >>= 8;
         }
-        d.update(tmp[0..8])
+
+        d.round(d.buf[0..]);
 
         for (d.s, 0..) |s, j| {
             mem.writeInt(u32, out[4 * j ..][0..4], s, .little);
         }
     }
 
-    fn round(dig: *Self, p: *const [16]u8) void {
+    fn round(dig: *Self, p: *const [64]u8) void {
         var a = dig.s[0];
         var b = dig.s[1];
         var c = dig.s[2];
@@ -114,11 +120,11 @@ pub const MD4 = struct {
         // Round 1.
         i = 0;
         while (i < 16) : (i += 1) {
-            var x = i;
-            var s = shift1[i%4];
-            var f = ((c ^ d) & b) ^ d;
+            const x = i;
+            const s = shift1[i%4];
+            const f = ((c ^ d) & b) ^ d;
             a = a +% f +% X[x];
-            a = math.rotl(u32, a, @as(u32, s));
+            a = math.rotl(u32, a, s);
             
             tmp = d;
             d = c;
@@ -130,11 +136,11 @@ pub const MD4 = struct {
         // Round 2.
         i = 0;
         while (i < 16) : (i += 1) {
-            var x = xIndex2[i];
-            var s = shift2[i%4];
-            var g = (b & c) | (b & d) | (c & d);
+            const x = xIndex2[i];
+            const s = shift2[i%4];
+            const g = (b & c) | (b & d) | (c & d);
             a = a +% g +% X[x] +% 0x5a827999;
-            a = math.rotl(u32, a, @as(u32, s));
+            a = math.rotl(u32, a, s);
             
             tmp = d;
             d = c;
@@ -146,11 +152,11 @@ pub const MD4 = struct {
         // Round 3.
         i = 0;
         while (i < 16) : (i += 1) {
-            var x = xIndex3[i];
-            var s = shift3[i%4];
-            var h = b ^ c ^ d;
+            const x = xIndex3[i];
+            const s = shift3[i%4];
+            const h = b ^ c ^ d;
             a = a +% h +% X[x] +% 0x6ed9eba1;
-            a = math.rotl(u32, a, @as(u32, s));
+            a = math.rotl(u32, a, s);
             
             tmp = d;
             d = c;
