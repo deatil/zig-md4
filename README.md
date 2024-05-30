@@ -1,6 +1,6 @@
 ## Zig-MD4 
 
-zig-md4 is a MD4 hash function lib.
+zig-md4 is a MD4 hash function for Zig.
 
 
 ### Env
