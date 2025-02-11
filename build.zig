@@ -1,27 +1,24 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
-
-    const optimize = b.standardOptimizeOption(.{});
-
-    const lib = b.addStaticLibrary(.{
-        .name = "zig-md4",
-        .root_source_file = .{ .path = "src/md4.zig" },
-        .target = target,
-        .optimize = optimize,
+    _ = b.addModule("zig-md4", .{
+        .root_source_file = b.path("./src/md4.zig"),
     });
 
-    b.installArtifact(lib);
+    // -Dtest-filter="..."
+    const test_filter = b.option([]const []const u8, "test-filter", "Filter for tests to run");
 
-    const main_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/md4.zig" },
-        .target = target,
-        .optimize = optimize,
+    // zig build unit_test
+    const unit_tests = b.addTest(.{
+        .root_source_file = b.path("./src/md4.zig"),
     });
+    if (test_filter) |t| unit_tests.filters = t;
 
-    const run_main_tests = b.addRunArtifact(main_tests);
+    // zig build [install]
+    b.installArtifact(unit_tests);
 
-    const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&run_main_tests.step);
+    // zig build -Dtest-filter="..." run_unit_test
+    const run_unit_tests = b.addRunArtifact(unit_tests);
+    const unit_test_step = b.step("unit_test", "Run unit tests");
+    unit_test_step.dependOn(&run_unit_tests.step);
 }
