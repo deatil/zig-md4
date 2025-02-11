@@ -102,6 +102,12 @@ pub const MD4 = struct {
         }
     }
 
+    pub fn finalResult(d: *Self) [digest_length]u8 {
+        var result: [digest_length]u8 = undefined;
+        d.final(&result);
+        return result;
+    }
+
     fn round(dig: *Self, p: *const [64]u8) void {
         var a = dig.s[0];
         var b = dig.s[1];
@@ -239,6 +245,24 @@ test "streaming" {
     h.update("c");
     h.final(out[0..]);
 
+    try assertEqual("a448017aaf21d8525fc10ae87aa6729d", out[0..]);
+}
+
+test "finalResult" {
+    var h = MD4.init(.{});
+    var out = h.finalResult();
+    try assertEqual("31d6cfe0d16ae931b73c59d7e0c089c0", out[0..]);
+
+    h = MD4.init(.{});
+    h.update("abc");
+    out = h.finalResult();
+    try assertEqual("a448017aaf21d8525fc10ae87aa6729d", out[0..]);
+}
+
+test "writer" {
+    var h = MD4.init(.{});
+    try h.writer().print("{s}", .{"abc"});
+    const out = h.finalResult();
     try assertEqual("a448017aaf21d8525fc10ae87aa6729d", out[0..]);
 }
 
