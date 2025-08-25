@@ -11,13 +11,13 @@ pub const MD4 = struct {
     pub const block_length = 64;
     pub const digest_length = 16;
     pub const Options = struct {};
-    
-    const shift1 = [_]isize{3, 7, 11, 19};
-    const shift2 = [_]isize{3, 5, 9, 13};
-    const shift3 = [_]isize{3, 9, 11, 15};
 
-    const xIndex2 = [_]usize{0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15};
-    const xIndex3 = [_]usize{0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15};
+    const shift1 = [_]isize{ 3, 7, 11, 19 };
+    const shift2 = [_]isize{ 3, 5, 9, 13 };
+    const shift3 = [_]isize{ 3, 9, 11, 15 };
+
+    const xIndex2 = [_]usize{ 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 };
+    const xIndex3 = [_]usize{ 0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15 };
 
     s: [4]u32,
     // Streaming Cache
@@ -113,25 +113,25 @@ pub const MD4 = struct {
         var b = dig.s[1];
         var c = dig.s[2];
         var d = dig.s[3];
-        
+
         var tmp: u32 = undefined;
-        
+
         var X: [16]u32 = undefined;
 
         var i: usize = 0;
         while (i < 16) : (i += 1) {
-            X[i] = mem.readInt(u32, p[i * 4 ..][0..4], .little); 
+            X[i] = mem.readInt(u32, p[i * 4 ..][0..4], .little);
         }
 
         // Round 1.
         i = 0;
         while (i < 16) : (i += 1) {
             const x = i;
-            const s = shift1[i%4];
+            const s = shift1[i % 4];
             const f = ((c ^ d) & b) ^ d;
             a = a +% f +% X[x];
             a = math.rotl(u32, a, s);
-            
+
             tmp = d;
             d = c;
             c = b;
@@ -143,11 +143,11 @@ pub const MD4 = struct {
         i = 0;
         while (i < 16) : (i += 1) {
             const x = xIndex2[i];
-            const s = shift2[i%4];
+            const s = shift2[i % 4];
             const g = (b & c) | (b & d) | (c & d);
             a = a +% g +% X[x] +% 0x5a827999;
             a = math.rotl(u32, a, s);
-            
+
             tmp = d;
             d = c;
             c = b;
@@ -159,11 +159,11 @@ pub const MD4 = struct {
         i = 0;
         while (i < 16) : (i += 1) {
             const x = xIndex3[i];
-            const s = shift3[i%4];
+            const s = shift3[i % 4];
             const h = b ^ c ^ d;
             a = a +% h +% X[x] +% 0x6ed9eba1;
             a = math.rotl(u32, a, s);
-            
+
             tmp = d;
             d = c;
             c = b;
@@ -178,7 +178,7 @@ pub const MD4 = struct {
     }
 
     pub const Error = error{};
-    pub const Writer = std.io.Writer(*Self, Error, write);
+    pub const Writer = std.io.GenericWriter(*Self, Error, write);
 
     fn write(self: *Self, bytes: []const u8) Error!usize {
         self.update(bytes);
