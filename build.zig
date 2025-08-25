@@ -1,8 +1,11 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    _ = b.addModule("zig-md4", .{
-        .root_source_file = b.path("./src/md4.zig"),
+    const target = b.standardTargetOptions(.{});
+
+    const mod = b.addModule("zig-md4", .{
+        .root_source_file = b.path("src/md4.zig"),
+        .target = target,
     });
 
     // -Dtest-filter="..."
@@ -10,7 +13,7 @@ pub fn build(b: *std.Build) void {
 
     // zig build unit_test
     const unit_tests = b.addTest(.{
-        .root_source_file = b.path("./src/md4.zig"),
+        .root_module = mod,
     });
     if (test_filter) |t| unit_tests.filters = t;
 
