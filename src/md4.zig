@@ -7,7 +7,14 @@ const math = std.math;
 /// The MD4 function is now considered cryptographically broken.
 /// Namely, it is trivial to find multiple inputs producing the same hash.
 pub const MD4 = struct {
+    s: [4]u32,
+    // Streaming Cache
+    buf: [64]u8,
+    buf_len: u8,
+    total_len: u64,
+
     const Self = @This();
+
     pub const block_length = 64;
     pub const digest_length = 16;
     pub const Options = struct {};
@@ -18,12 +25,6 @@ pub const MD4 = struct {
 
     const xIndex2 = [_]usize{ 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 };
     const xIndex3 = [_]usize{ 0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15 };
-
-    s: [4]u32,
-    // Streaming Cache
-    buf: [64]u8,
-    buf_len: u8,
-    total_len: u64,
 
     pub fn init(options: Options) Self {
         _ = options;
