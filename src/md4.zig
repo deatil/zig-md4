@@ -28,7 +28,7 @@ pub const MD4 = struct {
 
     pub fn init(options: Options) Self {
         _ = options;
-        return Self{
+        const self = Self{
             .s = [_]u32{
                 0x67452301,
                 0xEFCDAB89,
@@ -39,6 +39,8 @@ pub const MD4 = struct {
             .buf_len = 0,
             .total_len = 0,
         };
+
+        return self;
     }
 
     pub fn hash(b: []const u8, out: *[digest_length]u8, options: Options) void {
@@ -177,18 +179,6 @@ pub const MD4 = struct {
         dig.s[2] +%= c;
         dig.s[3] +%= d;
     }
-
-    pub const Error = error{};
-    pub const Writer = std.io.GenericWriter(*Self, Error, write);
-
-    fn write(self: *Self, bytes: []const u8) Error!usize {
-        self.update(bytes);
-        return bytes.len;
-    }
-
-    pub fn writer(self: *Self) Writer {
-        return .{ .context = self };
-    }
 };
 
 // Hash using the specified hasher `H` asserting `expected == H(input)`.
@@ -257,13 +247,6 @@ test "finalResult" {
     h = MD4.init(.{});
     h.update("abc");
     out = h.finalResult();
-    try assertEqual("a448017aaf21d8525fc10ae87aa6729d", out[0..]);
-}
-
-test "writer" {
-    var h = MD4.init(.{});
-    try h.writer().print("{s}", .{"abc"});
-    const out = h.finalResult();
     try assertEqual("a448017aaf21d8525fc10ae87aa6729d", out[0..]);
 }
 
