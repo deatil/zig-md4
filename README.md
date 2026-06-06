@@ -5,7 +5,7 @@ zig-md4 is a MD4 hash function for Zig.
 
 ### Env
 
- - Zig >= 0.15.1
+ - Zig >= 0.16.0
 
 
 ### Adding zig-md4 as a dependency
@@ -50,7 +50,9 @@ const zig_md4 = @import("zig-md4");
 const std = @import("std");
 const MD4 = @import("zig-md4").MD4;
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
+    _ = init;
+
     var out: [16]u8 = undefined;
     
     var h = MD4.init(.{});
