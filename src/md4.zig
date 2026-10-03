@@ -251,7 +251,7 @@ test "finalResult" {
 }
 
 test "aligned final" {
-    var block = [_]u8{0} ** MD4.block_length;
+    const block: [MD4.block_length]u8 = @splat(0);
     var out: [MD4.digest_length]u8 = undefined;
 
     var h = MD4.init(.{});

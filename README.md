@@ -5,7 +5,7 @@ zig-md4 is a MD4 hash function for Zig.
 
 ### Env
 
- - Zig >= 0.16.0
+ - Zig >= 0.17.0
 
 
 ### Adding zig-md4 as a dependency
